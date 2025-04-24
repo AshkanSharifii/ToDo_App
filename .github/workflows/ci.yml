@@ -24,12 +24,22 @@ jobs:
         cd ToDoApp
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        pip install pytest pytest-cov
+        pip install pytest pytest-cov httpx
+
+    - name: Create .env file for tests
+      run: |
+        cd ToDoApp
+        echo "SECRET_KEY=test_secret_key_for_ci" > ../.env
+        echo "DATABASE_URL=sqlite:///./test.db" >> ../.env
+        echo "CONSUL_HOST=localhost" >> ../.env
+        echo "CONSUL_PORT=8500" >> ../.env
+        echo "CONSUL_ENABLED=false" >> ../.env
+        echo "SERVICE_PORT=8080" >> ../.env
 
     - name: Run tests
       run: |
         cd ToDoApp
-        pytest --cov=app
+        PYTHONPATH=$PYTHONPATH:$(pwd) pytest --cov=app
 
     - name: Build Docker image
       run: |
@@ -53,12 +63,19 @@ jobs:
         cd NotificationService
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        pip install pytest pytest-cov
+        pip install pytest pytest-cov httpx
+
+    - name: Create .env file for tests
+      run: |
+        cd NotificationService
+        echo "CONSUL_HOST=localhost" > ../.env
+        echo "CONSUL_PORT=8500" >> ../.env
+        echo "CONSUL_ENABLED=false" >> ../.env
 
     - name: Run tests
       run: |
         cd NotificationService
-        pytest --cov=app
+        PYTHONPATH=$PYTHONPATH:$(pwd) pytest --cov=app
 
     - name: Build Docker image
       run: |
