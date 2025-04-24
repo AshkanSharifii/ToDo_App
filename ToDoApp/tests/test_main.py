@@ -92,18 +92,26 @@ def test_create_task(test_db):
     user_id = user_response.json()["id"]
     
     # Create a token manually for the user
-    token = create_access_token({"sub": user_id})
+    token = create_access_token(data={"sub": str(user_id)})
     
     # Now create a task
     task_data = {
         "title": "Test Task",
         "day": "2025-05-01"
     }
+    
+    # Debug: Print the token and headers
+    print(f"Using token: {token}")
+    print(f"User ID: {user_id}")
+    
     response = client.post(
         "/tasks/",
         json=task_data,
         headers={"Authorization": f"Bearer {token}"}
     )
+    
+    if response.status_code != 200:
+        print(f"Error response: {response.text}")
     
     assert response.status_code == 200
     data = response.json()
