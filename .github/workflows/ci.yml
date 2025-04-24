@@ -7,26 +7,60 @@ on:
     branches: [main] 
 
 jobs:
-  test:
+  test-todoapp:
+    name: Test TodoApp Service
     runs-on: ubuntu-latest
-    
+
     steps:
     - uses: actions/checkout@v3
-    
+
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.10'
-        
+
     - name: Install dependencies
       run: |
+        cd ToDoApp
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install pytest pytest-cov
-        
+
     - name: Run tests
       run: |
+        cd ToDoApp
         pytest --cov=app
-        
+
     - name: Build Docker image
-      run: docker build -t todoapp:latest .
+      run: |
+        cd ToDoApp
+        docker build -t todoapp:latest .
+
+  test-notification:
+    name: Test Notification Service
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    - name: Install dependencies
+      run: |
+        cd NotificationService
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest pytest-cov
+
+    - name: Run tests
+      run: |
+        cd NotificationService
+        pytest --cov=app
+
+    - name: Build Docker image
+      run: |
+        cd NotificationService
+        docker build -t notification-service:latest .
