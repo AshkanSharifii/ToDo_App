@@ -1,0 +1,17 @@
+[req]
+req_extensions = v3_req
+distinguished_name = req_distinguished_name
+
+[req_distinguished_name]
+
+[v3_req]
+subjectAltName = @alt_names
+
+[alt_names]
+DNS.1 = localhost
+DNS.2 = kong
+DNS.3 = todoapp
+DNS.4 = notification-service
+DNS.5 = todoapp-sidecar
+DNS.6 = notification-sidecar
+IP.1 = 127.0.0.1

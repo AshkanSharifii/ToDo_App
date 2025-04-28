@@ -1,3 +1,4 @@
+# ToDoApp/app/api/endpoints/auth.py
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
@@ -8,6 +9,17 @@ from app.crud import crud_user
 from app.schemas.user import UserCreate, UserOut
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+
+@router.get("/")
+def get_auth_info():
+    """Get authentication API information"""
+    return {
+        "message": "Authentication API",
+        "endpoints": {
+            "/auth/signup (POST)": "Register a new user",
+            "/auth/login (POST)": "Login with credentials"
+        }
+    }
 
 @router.post("/signup", response_model=UserOut)
 def signup(user_in: UserCreate, db: Session = Depends(get_db)):

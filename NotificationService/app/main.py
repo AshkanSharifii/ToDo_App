@@ -33,6 +33,17 @@ def health_check():
     """Health check endpoint for Consul"""
     return {"status": "healthy"}
 
+@app.get("/api/notifications")
+def get_notifications():
+    """Get notifications information"""
+    return {
+        "status": "success",
+        "message": "Notification service is running",
+        "endpoints": {
+            "POST /api/notifications": "Send a notification (requires user_id and message)"
+        }
+    }
+
 @app.post("/api/notifications")
 def send_notification(notification: Notification):
     """Send a notification to a user"""

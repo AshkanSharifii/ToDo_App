@@ -1,0 +1,72 @@
+_format_version: "3.0"
+_transform: true
+
+services:
+  # TodoApp Service via sidecar
+  - name: todoapp-service
+    url: https://todoapp-sidecar:10000
+    plugins:
+      - name: request-transformer
+        config:
+          add:
+            headers: ["Kong-Request-ID:${request.headers.x-request-id}"]
+    routes:
+      - name: todoapp-api
+        paths:
+          - /api/tasks
+          - /auth
+          - /users
+        preserve_host: true
+        strip_path: false
+      - name: todoapp-docs
+        paths:
+          - /docs
+          - /redoc
+          - /openapi.json
+          - /static
+        preserve_host: true
+        strip_path: false
+      - name: todoapp-root
+        paths:
+          - /
+        preserve_host: true
+        strip_path: false
+
+  # Notification Service via sidecar
+  - name: notification-service
+    url: https://notification-sidecar:10001
+    plugins:
+      - name: request-transformer
+        config:
+          add:
+            headers: ["Kong-Request-ID:${request.headers.x-request-id}"]
+    routes:
+      - name: notification-api
+        paths:
+          - /api/notifications
+        preserve_host: true
+        strip_path: false
+
+ca_certificates:
+  - id: f0dbb5d9-5b62-4271-8a89-66553e79c121
+    cert: |
+      -----BEGIN CERTIFICATE-----
+      MIIDMTCCAhmgAwIBAgIUU3+H2MGkWi26eYzHRlWHUFGvHAswDQYJKoZIhvcNAQEL
+      BQAwKDENMAsGA1UEAwwETXlDQTEXMBUGA1UECgwOTXlPcmdhbml6YXRpb24wHhcN
+      MjUwNDI4MDc1NjE3WhcNMjgwMjE2MDc1NjE3WjAoMQ0wCwYDVQQDDARNeUNBMRcw
+      FQYDVQQKDA5NeU9yZ2FuaXphdGlvbjCCASIwDQYJKoZIhvcNAQEBBQADggEPADCC
+      AQoCggEBAKxVd32esyI0egXDJDUS8Gu65gj7tZ0ePfPOSMYQRCt/cQnJnJLw6qlz
+      pUzgtYY8XHnOSnI8QHKdr6NI3912Zrtk4P0SGphYRVRKhFGlmIxdk2KQgdtYXQr5
+      qGIanJzXmGPB4NAanJalonrC23K/z4ofMSgPrYyMOzunJexBI6y62Wd+OKcAh/gP
+      KqcZ8Gyyj2TgfRK3bUT1KIOEm1EAaY3+EC7t3ZgrnFV37JhqJmaHw5hA/9R5+qoZ
+      HZ4OhcdXIVYKFhXPCWcBFwZRPI2At6MDSnE3QmYm1d4vSULx1aJdkYecPrpDzH6E
+      3bSV45YeCGkmiPSsVfiPfoieHsRXL3cCAwEAAaNTMFEwHQYDVR0OBBYEFAe4JP3L
+      c50QCEw4Wk6b3ElePYoLMB8GA1UdIwQYMBaAFAe4JP3Lc50QCEw4Wk6b3ElePYoL
+      MA8GA1UdEwEB/wQFMAMBAf8wDQYJKoZIhvcNAQELBQADggEBAB84YDZHtpFQYbHX
+      /ZEiga9+uIZcaVYIKQtpp77YbgahqHRwvSUryo19VA238+Ee8FGyNOTsWIKl7mw5
+      fNmEIUIThW9OZHOSAhOEX9UkWZr3x9oyGttfMXxKpb2MgwG++rHMy4NX8kmrD2dF
+      Oonv3U6fvnk/p3qzWOirsRXjMD7eySVutiY31GLDYBNjisH9adgv1dBw1t79iS6P
+      RWdqomIdjXtDwH2lejcNfu6QPOAjkjr3K5svu/pZzSCQOaPfjoP06XcFaVj8gnx4
+      TcfBO2VdtO8cJJ19AIo3eAw1GxH515gRHZ/7XywBASNc0eREMRns1VhxW9YwiE2G
+      WN1t6d8=
+      -----END CERTIFICATE-----

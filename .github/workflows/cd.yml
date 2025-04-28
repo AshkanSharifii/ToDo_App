@@ -24,6 +24,10 @@ jobs:
         echo "CONSUL_PORT=8500" >> .env
         echo "CONSUL_ENABLED=true" >> .env
         echo "SERVICE_PORT=8080" >> .env
+        echo "KONG_DATABASE=postgres" >> .env
+        echo "KONG_PG_HOST=kong-database" >> .env
+        echo "KONG_PG_USER=kong" >> .env
+        echo "KONG_PG_PASSWORD=kongpass" >> .env
 
     - name: Build TodoApp Docker image
       run: |
@@ -35,10 +39,15 @@ jobs:
         cd NotificationService
         docker build -t notification-service:latest .
 
+    - name: Build Kong image
+      run: |
+        docker pull kong:3.3.1
+
     - name: Save Docker images
       run: |
         docker save todoapp:latest > todoapp.tar
         docker save notification-service:latest > notification-service.tar
+        docker save kong:3.3.1 > kong.tar
 
     - name: Deploy to Server
       uses: appleboy/scp-action@master
@@ -46,7 +55,7 @@ jobs:
         host: ${{ secrets.DEPLOY_HOST }}
         username: ${{ secrets.DEPLOY_USERNAME }}
         key: ${{ secrets.DEPLOY_KEY }}
-        source: "todoapp.tar,notification-service.tar,docker-compose.yml,.env"
+        source: "todoapp.tar,notification-service.tar,kong.tar,docker-compose.yml,.env,setup-kong-dirs.sh,kong/"
         target: "/opt/todoapp"
 
     - name: Start application
@@ -59,4 +68,9 @@ jobs:
           cd /opt/todoapp
           docker load < todoapp.tar
           docker load < notification-service.tar
+          docker load < kong.tar
           docker-compose up -d
+          chmod +x kong-setup.sh
+          # Wait for Kong to be ready before running setup
+          sleep 30
+          ./kong-setup.sh

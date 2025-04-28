@@ -1,6 +1,11 @@
 version: '3'
 
+networks:
+  app-network:
+    driver: bridge
+
 services:
+  # Consul service registry
   consul:
     image: hashicorp/consul:1.15.3
     ports:
@@ -9,29 +14,86 @@ services:
     networks:
       - app-network
 
-  todoapp:
-    build: ./ToDoApp
+  # Kong API Gateway with mTLS
+  kong:
+    image: kong:3.0
+    environment:
+      - KONG_DATABASE=off
+      - KONG_DECLARATIVE_CONFIG=/usr/local/kong/declarative/kong.yml
+      - KONG_PROXY_ACCESS_LOG=/dev/stdout
+      - KONG_ADMIN_ACCESS_LOG=/dev/stdout
+      - KONG_PROXY_ERROR_LOG=/dev/stderr
+      - KONG_ADMIN_ERROR_LOG=/dev/stderr
+      - KONG_ADMIN_LISTEN=0.0.0.0:8001
+      # mTLS Configuration
+      - KONG_SSL=on
+      - KONG_SSL_CERT=/etc/kong/certs/server.crt
+      - KONG_SSL_CERT_KEY=/etc/kong/certs/server.key
+      - KONG_CLIENT_SSL=on
+      - KONG_CLIENT_SSL_CERT=/etc/kong/certs/client.crt
+      - KONG_CLIENT_SSL_CERT_KEY=/etc/kong/certs/client.key
+    volumes:
+      - ./kong.yml:/usr/local/kong/declarative/kong.yml
+      - ./certificates:/etc/kong/certs
     ports:
-      - "8080:8080"
-    env_file:
-      - ./.env
-    depends_on:
-      - consul
+      - "8000:8000"  # HTTP
+      - "8443:8443"  # HTTPS
+      - "8001:8001"  # Admin API
     networks:
       - app-network
+    depends_on:
+      - consul
 
-  notification-service:
-    build: ./NotificationService
-    ports:
-      - "8081:8081"
+  # TodoApp
+  todoapp:
+    build: ./ToDoApp
+    env_file:
+      - ./.env
     environment:
       - CONSUL_HOST=consul
       - CONSUL_PORT=8500
+      - CONSUL_ENABLED=true
+      - SERVICE_HOST=0.0.0.0
+      - SERVICE_PORT=8080
+    volumes:
+      - ./certificates:/etc/ssl/certs
+    networks:
+      - app-network
     depends_on:
       - consul
+
+  # TodoApp Envoy sidecar
+  todoapp-sidecar:
+    image: envoyproxy/envoy:v1.26-latest
+    volumes:
+      - ./envoy/todoapp.yaml:/etc/envoy/envoy.yaml
+      - ./certificates:/etc/ssl/certs
+    depends_on:
+      - todoapp
     networks:
       - app-network
 
-networks:
-  app-network:
-    driver: bridge
+  # Notification service
+  notification-service:
+    build: ./NotificationService
+    environment:
+      - CONSUL_HOST=consul
+      - CONSUL_PORT=8500
+      - CONSUL_ENABLED=true
+    volumes:
+      - ./certificates:/etc/ssl/certs
+    networks:
+      - app-network
+    depends_on:
+      - consul
+
+  # Notification service Envoy sidecar
+  notification-sidecar:
+    image: envoyproxy/envoy:v1.26-latest
+    volumes:
+      - ./envoy/notification.yaml:/etc/envoy/envoy.yaml
+      - ./certificates:/etc/ssl/certs
+    depends_on:
+      - notification-service
+    networks:
+      - app-network

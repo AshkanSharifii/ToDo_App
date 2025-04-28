@@ -36,6 +36,21 @@ consul_client = None
 if settings.CONSUL_ENABLED:
     consul_client = ConsulClient()
 
+@app.get("/")
+def root():
+    """Root endpoint"""
+    return {
+        "name": settings.APP_NAME,
+        "version": settings.APP_VERSION,
+        "description": "TodoApp API Service",
+        "endpoints": [
+            "/tasks - Task management",
+            "/auth - Authentication",
+            "/users - User management",
+            "/health - Health check"
+        ]
+    }
+
 @app.on_event("startup")
 async def startup_event():
     """Startup event handler - register with Consul if enabled"""
