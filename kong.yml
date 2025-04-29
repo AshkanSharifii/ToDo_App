@@ -2,15 +2,30 @@ _format_version: "3.0"
 _transform: true
 
 services:
-  # TodoApp Service via sidecar
+  # Landing Page Service
+  - name: landing-page-service
+    url: http://landing-page:80
+    routes:
+      - name: landing-page-root
+        paths:
+          - /
+        preserve_host: true
+        strip_path: false
+
+  # TodoApp Service via sidecar - using direct container name that will resolve in Docker
   - name: todoapp-service
-    url: https://todoapp-sidecar:10000
+    url: http://todoapp-sidecar:10000
     plugins:
       - name: request-transformer
         config:
           add:
             headers: ["Kong-Request-ID:${request.headers.x-request-id}"]
     routes:
+      - name: todoapp-root
+        paths:
+          - /todoapp
+        strip_path: true
+        preserve_host: true
       - name: todoapp-api
         paths:
           - /api/tasks
@@ -26,26 +41,80 @@ services:
           - /static
         preserve_host: true
         strip_path: false
-      - name: todoapp-root
-        paths:
-          - /
-        preserve_host: true
-        strip_path: false
 
-  # Notification Service via sidecar
+  # Notification Service via sidecar - using direct container name that will resolve in Docker
   - name: notification-service
-    url: https://notification-sidecar:10001
+    url: http://notification-sidecar:10001
     plugins:
       - name: request-transformer
         config:
           add:
             headers: ["Kong-Request-ID:${request.headers.x-request-id}"]
     routes:
+      - name: notification-root
+        paths:
+          - /notification
+        strip_path: true
+        preserve_host: true
       - name: notification-api
         paths:
           - /api/notifications
         preserve_host: true
         strip_path: false
+
+certificates:
+  - id: d3b58d0e-778c-4798-a877-7512c047496e
+    cert: |
+      -----BEGIN CERTIFICATE-----
+      MIIDjDCCAnSgAwIBAgIUQqz252HJCeHpqCBJrcDHADDXLYEwDQYJKoZIhvcNAQEL
+      BQAwKDENMAsGA1UEAwwETXlDQTEXMBUGA1UECgwOTXlPcmdhbml6YXRpb24wHhcN
+      MjUwNDI4MDc1NjE3WhcNMjYwNDI4MDc1NjE3WjAqMQ8wDQYDVQQDDAZjbGllbnQx
+      FzAVBgNVBAoMDk15T3JnYW5pemF0aW9uMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8A
+      MIIBCgKCAQEAwoLjRxxKza/Bj+59vLRbKltgCZBuY6Qehfp4JYXM0aRVh20ooR1+
+      tpNVWJ01dsbW9xzFOhMssjxrwPQ6YB0NlfZdpfFV0H/jwDJMiFr3JwOCRMWFaQjt
+      eoAKgvEaBvV89+ND8hr0eju18FfxnGgJbRI2jpt71dl64+7CEAu/43Vhgr0DiEPJ
+      51FdB8qqwchmMO4X2Ihw3Tbt/aVKPFyYtENE0OGpFjnNS2YTrpANJImKN/8KleER
+      9ju0i5DV4Doeyv3Pke5Cd5jT5MkJszJS6j0UggNYTrayEFl/58+rjPJb3t2TsNnr
+      WM2rKeUlpHfSF8HgFbavs9SWY8barw+dQQIDAQABo4GrMIGoMGYGA1UdEQRfMF2C
+      CWxvY2FsaG9zdIIEa29uZ4IHdG9kb2FwcIIUbm90aWZpY2F0aW9uLXNlcnZpY2WC
+      D3RvZG9hcHAtc2lkZWNhcoIUbm90aWZpY2F0aW9uLXNpZGVjYXKHBH8AAAEwHQYD
+      VR0OBBYEFKBzls8O05kfCT1JbYRmwLwMksBxMB8GA1UdIwQYMBaAFAe4JP3Lc50Q
+      CEw4Wk6b3ElePYoLMA0GCSqGSIb3DQEBCwUAA4IBAQBH0vNw5xKbVSDuRf3iybFy
+      k9S4Xbm+G4qV7avQ+U/Ntpt7Rl9CKeMYdndUYYNqxygt346gnxY7I6+9ZnahGqBK
+      0giT/kYEhrMI6WUuefHPA1d57et/1UB8UYv1PgjPLWb66EsF97iJJfzW2wn0VWM2
+      FDfwkM1iJQ62xneNlviofnLHZgRKSK5HFchk5ibZheecDGxsSPhbQ3vSQ2bPVQ8N
+      RMkWypxtulYBaozhQia+6M8Ikd6Uk1mlP7zzqxjnEv7vCBwVHf72NI4FUoGC7kmF
+      sHHOIOejHFsUQk63BETQ6p5/J9T+03uPHoybuL8o397of9yBOYjEOsbO1kLpLrAC
+      -----END CERTIFICATE-----
+    key: |
+      -----BEGIN PRIVATE KEY-----
+      MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDCguNHHErNr8GP
+      7n28tFsqW2AJkG5jpB6F+nglhczRpFWHbSihHX62k1VYnTV2xtb3HMU6EyyyPGvA
+      9DpgHQ2V9l2l8VXQf+PAMkyIWvcnA4JExYVpCO16gAqC8RoG9Xz340PyGvR6O7Xw
+      V/GcaAltEjaOm3vV2Xrj7sIQC7/jdWGCvQOIQ8nnUV0HyqrByGYw7hfYiHDdNu39
+      pUo8XJi0Q0TQ4akWOc1LZhOukA0kiYo3/wqV4RH2O7SLkNXgOh7K/c+R7kJ3mNPk
+      yQmzMlLqPRSCA1hOtrIQWX/nz6uM8lve3ZOw2etYzasp5SWkd9IXweAVtq+z1JZj
+      xtqvD51BAgMBAAECggEAEkpyGl4B98ETA9iiqMPR/dPtXkDfbI3ClAk3Upn4Jm+c
+      XlmItEvcfkkxAZ346NQuYzronfsvHQya+mBM+/xHaoZqDIB6+BoKnehs83aQXrIR
+      BiwHzVZ6VGZldqY68xQTHhFYMpRP0I28YF84uGM9Ha1UhYj/9l5W1Me/JnigYQBe
+      vZH6aEHUx13a/Ejj2Djw/F/slHHFLjShMBpnHlPYqlQmZXX65kYUZKlMbbsuT17R
+      LaVQODOlwNzPlaZR9WpdHlMDbKqpQq/s7Zp5QA/H9nRDbhWabWFOGtYSn9k6QiwC
+      hCzw1SQ2wuGhTXsN0WDQK5ZCIk2HOecT3SuKB0xhpQKBgQD6Z/lguHQGhkwBTl2d
+      VqbOdvZhIGNuxCDEK8wD57rosXqejIV/6rjqNI3UTFGQnYSav0sfELkk+6Hqds+F
+      G3dmNDkLQ/+7Cjk/H41WupAJOwRzokAsu2ci4RcPrzwLXt3HSeMEhvBxnh0d09A6
+      yIQrPXr6CpKn2UTBrvKDjPO8lQKBgQDG20LqSCHi1lWb8G4TPWJITKYUUGz4i3l9
+      W2978vO1V2sqPBPzEw7ftukmjVOo4SfTsXepXgKX9OrgoOTZL6vCKp0wkhhc2uqu
+      3d7VFZtRiT6NezQLRLp5JvcGOY8akjN/wJuZQ89py3Sc3hmEFPhf+rZR+NXvOTVQ
+      lBRLDUfG/QKBgAb9/EKtI+BCw8CNlaOdFc9SFxMjOmOPanLP3kSFpfx1aD0hI2Et
+      BrjTetpgvy5Ql7FSgiB98Q2NUTog0y6eU7kw4B7maS+p22td0C6JyxfW5Arujugw
+      23Jn4qL3e6+9mGfGMmaf9frWNW3tyjS6AKbMcrCktu+k63yVDASMXQn5AoGADRxt
+      yAajfVJGaLase0ZD0aKEHLjExopjozlBG3oESYOPBETbx94M0AE+VBVjW7Ikrxd3
+      XUpef2hdiBvzmsJC39Vxcb9gLdcdPBRS2dfH2tNitW9XGhsY9F32UYm//q9/B8BK
+      QguvhDku4hzer8+2JJXiKXtvl4s9EagBwoUIo30CgYEAwZNhk/arFpyuTj1Yog2i
+      ThSwdidlylsvSx0z4WWl43fe0MNZ2voy0JfxrFwxi2oLdiDTxWAAwDx2n0bwAuH1
+      qZ8S31rZdtngKShPL7ycWf3GsHF2NxTxv8PMwvwt/3ndYA+/Z+wn5FZOxQoKOSbO
+      UnenJuvS7FR9uIavamO+MHM=
+      -----END PRIVATE KEY-----
 
 ca_certificates:
   - id: f0dbb5d9-5b62-4271-8a89-66553e79c121

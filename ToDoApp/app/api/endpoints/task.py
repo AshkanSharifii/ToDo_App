@@ -9,6 +9,7 @@ from app.models.user import User
 
 from app.utils.notification_client import NotificationClient
 from app.core.consul_client import ConsulClient
+import os
 
 # Initialize clients
 consul_client = ConsulClient()

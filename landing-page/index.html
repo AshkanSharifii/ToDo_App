@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Microservices Demo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            color: #333;
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+        }
+        .services {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 30px;
+        }
+        .service-card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            width: 45%;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        }
+        .service-card:hover {
+            transform: translateY(-5px);
+        }
+        .service-card h2 {
+            color: #3498db;
+            text-align: center;
+        }
+        .service-card p {
+            text-align: center;
+        }
+        .btn {
+            display: block;
+            text-align: center;
+            background-color: #3498db;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: bold;
+            margin-top: 15px;
+        }
+        .btn:hover {
+            background-color: #2980b9;
+        }
+    </style>
+</head>
+<body>
+    <h1>Microservices Demo</h1>
+    <p>Welcome to the microservices demonstration. Choose one of the services below:</p>
+
+    <div class="services">
+        <div class="service-card">
+            <h2>ToDo Service</h2>
+            <p>Manage your tasks and to-do items.</p>
+            <a href="/todoapp" class="btn">Go to ToDo App</a>
+            <a href="/docs" class="btn" style="margin-top: 5px;">API Documentation</a>
+        </div>
+
+        <div class="service-card">
+            <h2>Notification Service</h2>
+            <p>Handle notifications and alerts.</p>
+            <a href="/notification" class="btn">Go to Notification Service</a>
+            <a href="/api/notifications" class="btn" style="margin-top: 5px;">API Endpoint</a>
+        </div>
+    </div>
+
+    <div style="margin-top: 40px; text-align: center;">
+        <h3>About this Demo</h3>
+        <p>This is a demonstration of microservices architecture with:</p>
+        <ul style="display: inline-block; text-align: left;">
+            <li>Kong API Gateway</li>
+            <li>Consul Service Registry</li>
+            <li>Envoy Sidecars</li>
+            <li>FastAPI Microservices</li>
+        </ul>
+    </div>
+</body>
+</html>

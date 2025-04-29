@@ -24,7 +24,7 @@ class ConsulClient:
 
         self.service_id = f"{name}-{hostname}-{port}"
 
-        # Register service with Consul
+        # Register service with Consul with HTTP health check
         self.consul.agent.service.register(
             name=name,
             service_id=self.service_id,
@@ -34,11 +34,12 @@ class ConsulClient:
             check={
                 "http": f"http://{ip_address}:{port}/health",
                 "interval": "10s",
-                "timeout": "5s"
+                "timeout": "5s",
+                "DeregisterCriticalServiceAfter": "30s"
             }
         )
 
-        print(f"Registered service {name} with Consul")
+        print(f"Registered service {name} with Consul using HTTP health check")
 
     def deregister_service(self):
         """Deregister the service from Consul"""

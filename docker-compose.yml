@@ -8,15 +8,21 @@ services:
   # Consul service registry
   consul:
     image: hashicorp/consul:1.15.3
+    container_name: consul
+    hostname: consul
     ports:
       - "8500:8500"
     command: "agent -server -ui -node=server-1 -bootstrap-expect=1 -client=0.0.0.0"
     networks:
-      - app-network
+      app-network:
+        aliases:
+          - consul
 
-  # Kong API Gateway with mTLS
+  # Kong API Gateway with HTTP for initial setup
   kong:
     image: kong:3.0
+    container_name: kong
+    hostname: kong
     environment:
       - KONG_DATABASE=off
       - KONG_DECLARATIVE_CONFIG=/usr/local/kong/declarative/kong.yml
@@ -25,13 +31,12 @@ services:
       - KONG_PROXY_ERROR_LOG=/dev/stderr
       - KONG_ADMIN_ERROR_LOG=/dev/stderr
       - KONG_ADMIN_LISTEN=0.0.0.0:8001
-      # mTLS Configuration
-      - KONG_SSL=on
-      - KONG_SSL_CERT=/etc/kong/certs/server.crt
-      - KONG_SSL_CERT_KEY=/etc/kong/certs/server.key
-      - KONG_CLIENT_SSL=on
-      - KONG_CLIENT_SSL_CERT=/etc/kong/certs/client.crt
-      - KONG_CLIENT_SSL_CERT_KEY=/etc/kong/certs/client.key
+      # DNS resolution settings
+      - KONG_DNS_RESOLVER=127.0.0.11:53
+      - KONG_DNS_ORDER=LAST,SRV,A,CNAME
+      - KONG_DNS_ERROR_TTL=1
+      - KONG_DNS_STALE_TTL=10
+      - KONG_LOG_LEVEL=debug
     volumes:
       - ./kong.yml:/usr/local/kong/declarative/kong.yml
       - ./certificates:/etc/kong/certs
@@ -40,13 +45,31 @@ services:
       - "8443:8443"  # HTTPS
       - "8001:8001"  # Admin API
     networks:
-      - app-network
+      app-network:
+        aliases:
+          - kong
     depends_on:
       - consul
+
+  # Landing page service
+  landing-page:
+    image: nginx:alpine
+    container_name: landing-page
+    hostname: landing-page
+    volumes:
+      - ./landing-page:/usr/share/nginx/html
+    networks:
+      app-network:
+        aliases:
+          - landing-page
+    depends_on:
+      - kong
 
   # TodoApp
   todoapp:
     build: ./ToDoApp
+    container_name: todoapp
+    hostname: todoapp
     env_file:
       - ./.env
     environment:
@@ -55,45 +78,87 @@ services:
       - CONSUL_ENABLED=true
       - SERVICE_HOST=0.0.0.0
       - SERVICE_PORT=8080
+    ports:
+      - "8080:8080"  # Expose the port for debugging
     volumes:
       - ./certificates:/etc/ssl/certs
     networks:
-      - app-network
+      app-network:
+        aliases:
+          - todoapp
     depends_on:
       - consul
 
   # TodoApp Envoy sidecar
   todoapp-sidecar:
     image: envoyproxy/envoy:v1.26-latest
+    container_name: todoapp-sidecar
+    hostname: todoapp-sidecar
     volumes:
       - ./envoy/todoapp.yaml:/etc/envoy/envoy.yaml
       - ./certificates:/etc/ssl/certs
+    command: "/usr/local/bin/envoy -c /etc/envoy/envoy.yaml --service-node todoapp-sidecar --service-cluster todoapp-cluster"
+    ports:
+      - "10000:10000"  # Expose the port for debugging
+      - "9901:9901"    # Admin interface
+    networks:
+      app-network:
+        aliases:
+          - todoapp-sidecar
     depends_on:
       - todoapp
-    networks:
-      - app-network
 
   # Notification service
   notification-service:
     build: ./NotificationService
+    container_name: notification-service
+    hostname: notification-service
     environment:
       - CONSUL_HOST=consul
       - CONSUL_PORT=8500
       - CONSUL_ENABLED=true
+    ports:
+      - "8081:8081"  # Expose the port for debugging
     volumes:
       - ./certificates:/etc/ssl/certs
     networks:
-      - app-network
+      app-network:
+        aliases:
+          - notification-service
     depends_on:
       - consul
 
   # Notification service Envoy sidecar
   notification-sidecar:
     image: envoyproxy/envoy:v1.26-latest
+    container_name: notification-sidecar
+    hostname: notification-sidecar
     volumes:
       - ./envoy/notification.yaml:/etc/envoy/envoy.yaml
       - ./certificates:/etc/ssl/certs
+    command: "/usr/local/bin/envoy -c /etc/envoy/envoy.yaml --service-node notification-sidecar --service-cluster notification-cluster"
+    ports:
+      - "10001:10001"  # Expose the port for debugging
+      - "9902:9902"    # Admin interface
+    networks:
+      app-network:
+        aliases:
+          - notification-sidecar
     depends_on:
       - notification-service
+
+  # Service to register sidecars with Consul
+  register-sidecars:
+    image: curlimages/curl:latest
+    container_name: register-sidecars
+    volumes:
+      - ./register-sidecars.sh:/tmp/register-sidecars.sh
+    command: sh -c "cat /tmp/register-sidecars.sh > /home/curl_user/register.sh && chmod +x /home/curl_user/register.sh && /home/curl_user/register.sh"
     networks:
       - app-network
+    depends_on:
+      - consul
+      - todoapp
+      - notification-service
+      - todoapp-sidecar
+      - notification-sidecar

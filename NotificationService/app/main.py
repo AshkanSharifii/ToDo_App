@@ -28,6 +28,15 @@ async def shutdown_event():
     """Deregister from Consul on shutdown"""
     consul_client.deregister_service()
 
+@app.get("/")
+def root():
+    """Root endpoint for health checks"""
+    return {
+        "service": "Notification Service",
+        "status": "running",
+        "version": "1.0.0"
+    }
+
 @app.get("/health")
 def health_check():
     """Health check endpoint for Consul"""

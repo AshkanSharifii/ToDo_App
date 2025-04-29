@@ -37,6 +37,7 @@ static_resources:
     - name: todoapp_cluster
       connect_timeout: 0.25s
       type: STRICT_DNS
+      dns_lookup_family: V4_ONLY
       lb_policy: ROUND_ROBIN
       load_assignment:
         cluster_name: todoapp_cluster

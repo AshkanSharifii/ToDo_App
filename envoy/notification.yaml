@@ -32,25 +32,12 @@ static_resources:
                   - name: envoy.filters.http.router
                     typed_config:
                       "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
-          transport_socket:
-            name: envoy.transport_sockets.tls
-            typed_config:
-              "@type": type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.DownstreamTlsContext
-              common_tls_context:
-                tls_certificates:
-                  - certificate_chain:
-                      filename: "/etc/ssl/certs/server.crt"
-                    private_key:
-                      filename: "/etc/ssl/certs/server.key"
-                validation_context:
-                  trusted_ca:
-                    filename: "/etc/ssl/certs/ca.crt"
-                  require_client_certificate: true
 
   clusters:
     - name: notification_cluster
       connect_timeout: 0.25s
       type: STRICT_DNS
+      dns_lookup_family: V4_ONLY
       lb_policy: ROUND_ROBIN
       load_assignment:
         cluster_name: notification_cluster
@@ -61,16 +48,3 @@ static_resources:
                     socket_address:
                       address: notification-service
                       port_value: 8081
-      transport_socket:
-        name: envoy.transport_sockets.tls
-        typed_config:
-          "@type": type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext
-          common_tls_context:
-            tls_certificates:
-              - certificate_chain:
-                  filename: "/etc/ssl/certs/client.crt"
-                private_key:
-                  filename: "/etc/ssl/certs/client.key"
-            validation_context:
-              trusted_ca:
-                filename: "/etc/ssl/certs/ca.crt"
